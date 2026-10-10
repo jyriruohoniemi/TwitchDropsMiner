@@ -773,7 +773,9 @@ The application uses a web-based interface accessible via browser:
 
 - `index.html` - Single-page application layout with tabs (Main, Inventory, History, Settings, Help)
 - `static/app.js` - Socket.IO client, real-time UI updates, API calls, Inventory Filtering and Drop History logic
-- `static/styles.css` - Responsive design with dark mode support
+- `static/styles.css` - Responsive TUI-style theme: monospace type, square frames, and
+  panel titles set into the top border. Define colors only as tokens in `:root` (light)
+  and `body.dark-mode`; derive tints with `color-mix()` rather than hardcoded values
 
 ### Communication Protocol
 
