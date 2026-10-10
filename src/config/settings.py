@@ -99,7 +99,7 @@ class Settings:
         self.load()
 
     def load(self):
-        # TODO: remvoe customized serde in the future
+        # TODO: remove customized serde in the future
         # Migrate filters before the generic merge discards their previous key.
         settings = json_load(SETTINGS_PATH, deepcopy(default_settings), merge=False)
         filters = settings.get("inventory_filters")

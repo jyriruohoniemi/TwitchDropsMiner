@@ -10,12 +10,11 @@ import aiohttp
 import pytest
 
 from src.auth.browser_session import BrowserIdentity
-from src.auth.session_bundle import SessionBundle
 from src.auth.session_bundle import SessionError
 from src.config import ClientType, State
 from src.core.client import Twitch
-from tests.test_session_controller import seed
 from tests.test_imported_session import transport
+from tests.test_session_controller import seed
 
 
 def miner(tmp_path, monkeypatch):

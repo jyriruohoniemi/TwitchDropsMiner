@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.models.channel import Channel
-from src.websocket.websocket import Websocket
 from src.web.managers.login import LoginFormManager
+from src.websocket.websocket import Websocket
 from tests.test_session_lifecycle import miner
 
 

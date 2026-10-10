@@ -252,6 +252,7 @@ async def test_driver_error_never_exposes_remote_payload(tmp_path):
 @pytest.mark.asyncio
 async def test_dashboard_close_interrupts_pending_login(tmp_path, monkeypatch):
     from unittest.mock import MagicMock
+
     from src.core.client import Twitch
     from src.exceptions import ExitRequest
 
@@ -281,6 +282,7 @@ async def test_dashboard_close_interrupts_pending_login(tmp_path, monkeypatch):
 @pytest.mark.asyncio
 async def test_browser_cannot_replace_known_account(tmp_path, monkeypatch):
     from unittest.mock import MagicMock
+
     from src.auth.browser_session import BrowserIdentity
     from src.core.client import Twitch
 
@@ -301,6 +303,7 @@ async def test_browser_cannot_replace_known_account(tmp_path, monkeypatch):
 @pytest.mark.asyncio
 async def test_websocket_sends_credential_without_logging_it(caplog):
     from unittest.mock import MagicMock
+
     from src.websocket.websocket import Websocket
 
     socket = Websocket(MagicMock(), 0)

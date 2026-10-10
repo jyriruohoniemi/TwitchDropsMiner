@@ -84,9 +84,9 @@ def test_unpaired_credential_routes_do_not_exist(api, path):
 @pytest.mark.parametrize("origin", [None, "https://evil.test", "http://testserver"])
 def test_viewer_is_rejected_without_current_interactive_browser(api, origin):
     client, miner = api
-    with pytest.raises(WebSocketDisconnect):
-        with client.websocket_connect("/api/session/vnc", headers={"Origin": origin} if origin else {}):
-            pass
+    headers = {"Origin": origin} if origin else {}
+    with pytest.raises(WebSocketDisconnect), client.websocket_connect("/api/session/vnc", headers=headers):
+        pass
 
 
 @pytest.mark.asyncio

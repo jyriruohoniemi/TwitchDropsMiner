@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections import OrderedDict, abc, deque
+from collections import OrderedDict, abc, defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
-from functools import partial
 from time import time
 from typing import TYPE_CHECKING, Any, Final, Literal
 
@@ -57,6 +56,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("TwitchDrops")
 gql_logger = logging.getLogger("TwitchDrops.gql")
+
+# Allowed channels listed per campaign in the debug campaign mapping.
+CAMPAIGN_MAPPING_CHANNEL_PREVIEW: Final = 10
 
 
 class Twitch:
@@ -303,10 +305,6 @@ class Twitch:
         if self._inventory_refresh_pending and self._state is not State.EXIT:
             self._state = State.INVENTORY_FETCH
             self._state_change.set()
-
-    def get_change_state_callable(self, state: State) -> abc.Callable[[], None]:
-        """Return a callable that changes state when invoked (deferred call for GUI usage)."""
-        return partial(self.change_state, state)
 
     def close(self) -> None:
         """
@@ -834,59 +832,33 @@ class Twitch:
         """Delegate to ChannelService."""
         await self._channel_service.bulk_check_online(channels)
 
-    def _filter_wanted_campaigns(self, next_hour: datetime) -> list[Game]:
-        """
-        Filter campaigns to find wanted games based on settings and benefits.
-        """
-        wanted_games: list[Game] = []
-        games_to_watch: list[str] = self.settings.games_to_watch
-        mining_benefits: dict[str, bool] = self.settings.mining_benefits
-
-        for game_name in games_to_watch:
-            game_name_lower: str = game_name.lower()
-            for campaign in self.inventory:
-                game: Game = campaign.game
-                if (
-                    game.name.lower() == game_name_lower
-                    and game not in wanted_games
-                    and campaign.can_earn_within(next_hour)
-                    and campaign.has_wanted_unclaimed_benefits(mining_benefits)
-                ):
-                    wanted_games.append(game)
-                    break
-        return wanted_games
-
     def _output_campaign_mapping(self, next_hour: datetime) -> None:
         logger.info("=== Active Campaigns Mapping ===")
-        from collections import defaultdict
-
-        game_campaign_map: dict[str, list[tuple[DropsCampaign, list[str]]]] = defaultdict(list)
+        campaigns_by_game: defaultdict[str, list[DropsCampaign]] = defaultdict(list)
         for campaign in self.inventory:
             if campaign.eligible and not campaign.mining_finished:
                 logger.info("eligible Campaign: %s - %s", campaign.name, campaign.game.name)
             if campaign.can_earn_within(next_hour):
-                channel_names = []
-                if campaign.allowed_channels:
-                    channel_names = [ch.name for ch in campaign.allowed_channels]
-                else:
-                    channel_names = ["<directory>"]
-                game_campaign_map[campaign.game.name].append((campaign, channel_names))
-        for game_name in sorted(game_campaign_map.keys()):
-            logger.debug(f"Game: {game_name}")
-            for campaign, channel_list in game_campaign_map[game_name]:
-                status_info = f"{'ACTIVE' if campaign.active else 'UPCOMING'}"
-                ends_info = campaign.ends_at.astimezone().strftime("%Y-%m-%d %H:%M")
-                channel_info = (
-                    f"{len(channel_list)} channels"
-                    if channel_list[0] != "<directory>"
-                    else "directory"
-                )
-                logger.debug(f"  └─ Campaign: {campaign.name} [{status_info}] (ends: {ends_info})")
-                logger.debug(f"     Channels: {channel_info}")
-                if channel_list[0] != "<directory>" and len(channel_list) <= 10:
-                    logger.debug(f"     └─ {', '.join(channel_list)}")
-                elif channel_list[0] != "<directory>":
-                    logger.debug(
-                        f"     └─ {', '.join(channel_list[:10])} ... (+{len(channel_list) - 10} more)"
-                    )
+                campaigns_by_game[campaign.game.name].append(campaign)
+        for game_name in sorted(campaigns_by_game):
+            logger.debug("Game: %s", game_name)
+            for campaign in campaigns_by_game[game_name]:
+                self._log_campaign_channels(campaign)
         logger.info("=== End Campaigns Mapping ===")
+
+    @staticmethod
+    def _log_campaign_channels(campaign: DropsCampaign) -> None:
+        status = "ACTIVE" if campaign.active else "UPCOMING"
+        ends = campaign.ends_at.astimezone().strftime("%Y-%m-%d %H:%M")
+        logger.debug("  └─ Campaign: %s [%s] (ends: %s)", campaign.name, status, ends)
+        channel_names = [channel.name for channel in campaign.allowed_channels]
+        if not channel_names:
+            logger.debug("     Channels: directory")
+            return
+        logger.debug("     Channels: %d channels", len(channel_names))
+        shown = ", ".join(channel_names[:CAMPAIGN_MAPPING_CHANNEL_PREVIEW])
+        hidden_count = len(channel_names) - CAMPAIGN_MAPPING_CHANNEL_PREVIEW
+        if hidden_count > 0:
+            logger.debug("     └─ %s ... (+%d more)", shown, hidden_count)
+        else:
+            logger.debug("     └─ %s", shown)

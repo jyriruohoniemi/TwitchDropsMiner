@@ -2,8 +2,8 @@
 
 import copy
 import hashlib
-import io
 import importlib
+import io
 import json
 import subprocess
 import tarfile

@@ -11,7 +11,12 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.auth.container_login import BrowserIsolation, ContainerDesktop, ContainerLogin, LoginChromium
+from src.auth.container_login import (
+    BrowserIsolation,
+    ContainerDesktop,
+    ContainerLogin,
+    LoginChromium,
+)
 from src.auth.session_bundle import SessionError
 from tests.test_session_controller import seed
 

@@ -75,6 +75,59 @@ It is the repository's contribution policy, not optional background reading.
      results in the PR without publishing personal working records.
    - Keep `CLAUDE.md` and `GEMINI.md` as relative symbolic links to `AGENTS.md`; do not replace them with duplicated text. Put any agent-specific instructions in clearly named sections of `AGENTS.md`.
 
+### Clean Code
+
+Apply these principles, adapted from Robert C. Martin's *Clean Code*, to new and
+changed code. They favor maintainability and readability. Correctness, security,
+and the behavior rules elsewhere in this file take precedence.
+
+- **Names**: Names should reveal intent (`remaining_minutes`, not `rm` or `data2`).
+  Use nouns for classes and verbs for functions and methods. Use one word per concept
+  across the codebase, for example always `fetch_` or always `get_` for the same kind
+  of operation. Avoid abbreviations, type encodings, and puns. A name's length should
+  match its scope.
+- **Functions**: Each function does one thing at one level of abstraction; a function
+  that also needs an "and" in its description should be split. Keep functions short
+  enough to read without scrolling. Prefer few arguments, and group related ones into
+  a dataclass. Avoid boolean flag arguments that switch behavior; write two functions
+  instead. Separate commands (change state) from queries (return a value). Avoid hidden
+  side effects.
+- **Comments**: Express intent in code first. Use comments for *why*: Twitch API
+  quirks, security constraints, and non-obvious tradeoffs. Delete commented-out code,
+  redundant or outdated comments, and changelog-style notes; Git keeps the history.
+  Docstrings describe contracts, not implementations.
+- **Formatting**: Ruff is the authority on style. Order code top-down: public entry
+  points before the helpers they call. Keep related code together and declare
+  variables close to where they are used.
+- **Objects and data**: Classes hide their internals behind behavior. Avoid
+  reaching through chains (`a.b.c.d`). Use plain dataclasses or TypedDicts for data
+  with no behavior. Don't build hybrids that expose fields and also contain logic
+  that depends on callers mutating them.
+- **Error handling**: Raise exceptions from `src/exceptions.py` instead of returning
+  error codes or `None` sentinels for failures. Catch the narrowest exception type
+  that applies, and never swallow exceptions silently. Error messages carry enough
+  context to diagnose the failure but never credentials or signed URLs. Keep error
+  handling separate from the main logic path. Wrap third-party APIs at a boundary
+  so their exceptions and types don't leak through the codebase.
+- **Classes**: Each class has a single responsibility and one reason to change. Keep
+  classes small and cohesive, with methods using most of the class's fields. Prefer
+  composition and depend on abstractions at boundaries, as the service layer does.
+- **Tests**: Test code is held to the same standard as production code. Use one
+  concept per test, descriptive test names, and the arrange/act/assert structure.
+  Tests must be fast, independent, repeatable, and deterministic: control clocks,
+  and use no real network or fixed sleeps.
+- **Simplicity**: In priority order, code runs all tests, contains no duplication,
+  expresses intent, and uses the fewest classes and methods possible. Don't add
+  speculative abstractions, configuration, or extension points.
+- **Smells to avoid**: dead code, magic numbers (use named constants in
+  `src/config/constants.py`), long parameter lists, feature envy, inconsistent
+  conventions, duplicated conditionals (replace with polymorphism or lookup tables),
+  and code at the wrong level of abstraction.
+- **Boy Scout Rule**: Leave touched code slightly cleaner than you found it, for
+  example by renaming an unclear variable or extracting a confusing expression.
+  Keep these cleanups small and within the files you're changing. Larger
+  restructuring still requires permission (see Refactoring above).
+
 ## Project Overview
 
 Twitch Drops Miner is a Python application that automatically mines timed Twitch drops without downloading stream data. It uses Twitch's GraphQL API and websocket connections to simulate watching streams while tracking drop progress.

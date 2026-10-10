@@ -42,7 +42,6 @@ class _AuthState:
         self.device_id: str
         self.session_id: str
         self.access_token: str
-        self.client_version: str
         self.browser_active = False
 
     def _hasattrs(self, *attrs: str) -> bool:
@@ -140,8 +139,6 @@ class _AuthState:
             headers["User-Agent"] = user_agent
         if hasattr(self, "session_id"):
             headers["Client-Session-Id"] = self.session_id
-        # if hasattr(self, "client_version"):
-        # headers["Client-Version"] = self.client_version
         if hasattr(self, "device_id"):
             headers["X-Device-Id"] = self.device_id
         if gql:
@@ -205,6 +202,3 @@ class _AuthState:
         self._twitch.gui.login.update(_.t["login"]["status"]["logged_in"], user_id)
         self._logged_in.set()
 
-    def invalidate(self):
-        """Invalidate the current access token."""
-        self._delattrs("access_token")
